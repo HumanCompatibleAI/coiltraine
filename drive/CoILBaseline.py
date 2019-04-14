@@ -97,7 +97,7 @@ class CoILBaseline(AutonomousAgent):
 
         return sensors
 
-    def run_step(self, input_data):
+    def run_step(self, input_data, timestamp):
         # Get the current directions for following the route
         directions = self._get_current_direction(input_data['GPS'][1])
         print (" Directions ", directions)
@@ -120,11 +120,6 @@ class CoILBaseline(AutonomousAgent):
         # There is the posibility to replace some of the predictions with oracle predictions.
         self.first_iter = False
         return control
-
-    def set_global_plan(self, topological_plan):
-        # We expand the commands before the curves in order to give more time
-        # for the agent to respond.
-        self._global_plan = topological_plan
 
     def get_attentions(self, layers=None):
         """
@@ -153,8 +148,9 @@ class CoILBaseline(AutonomousAgent):
 
         iteration = 0
 
-        sensor = sensor[g_conf.IMAGE_CUT[0]:g_conf.IMAGE_CUT[1], ...]
-
+        sensor = sensor[:, :, :3]  # BGRA->BGR: cut alpha channel
+        sensor = sensor[:, :, ::-1]  # BGR->RGB
+        sensor = sensor[g_conf.IMAGE_CUT[0]:g_conf.IMAGE_CUT[1], ...]  # crop
         sensor = scipy.misc.imresize(sensor, (g_conf.SENSORS['rgb'][1], g_conf.SENSORS['rgb'][2]))
 
         self.latest_image = sensor
